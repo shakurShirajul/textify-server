@@ -1,6 +1,9 @@
 import express from "express";
+import cookieParser from "cookie-parser";
+import cors from 'cors';
 import { database } from "./database/mongodb.js";
 import { Blogs } from "./models/blogs.js";
+import { Comments } from "./models/comments.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -9,7 +12,6 @@ database();
 
 // Middlewares
 app.use(express.json());
-
 
 // Blogs 
 
