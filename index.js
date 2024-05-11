@@ -19,10 +19,19 @@ app.use(express.json());
 app.use(cors());
 app.use(cookieParser());
 
+
 // Blogs 
 app.get('/blogs', async (req, res) => {  // Fetch Blogs Data From Database
-    const data = await Blogs.find({});
-    res.send(data);
+    const urlQuery = req.query?.category;
+
+    let blogs;
+    if (urlQuery !== undefined) {
+        console.log(urlQuery);
+        blogs = await Blogs.find({ category: urlQuery });
+    } else {
+        blogs = await Blogs.find();
+    }
+    res.send(blogs);
 })
 app.get('/blogs/recent', async (req, res) => { // Fetch Recents Six Blog From Database
 
@@ -36,6 +45,23 @@ app.post('/blog/add', async (req, res) => { // Insert Blog Data Into Database
         .status(201)
         .send({ success: true });
 })
+app.get('/blogs/search', async (req, res) => {
+    const searchText = req.query.title
+    try {
+        const data = await Blogs.find({
+            $text: {
+                $search: searchText,
+                $caseSensitive: false,
+            }
+        });
+        console.log(data);
+        res.send(data);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ message: "Error searching blogs", error });
+    }
+})
+// app.get('/blogs/category')
 
 // Wishlist
 app.get('/wishlists', async (req, res) => {

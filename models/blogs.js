@@ -25,18 +25,20 @@ const blogSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     },
-    author_image:{
+    author_image: {
         type: String,
         required: true,
     },
-    author_name:{
+    author_name: {
         type: String,
         required: true,
     },
-    author_email:{
+    author_email: {
         type: String,
         required: true,
     }
-})
+});
+
+blogSchema.index({ title: 'text' }, { default_language: "none" });
 
 export const Blogs = mongoose.model("blogs", blogSchema);
