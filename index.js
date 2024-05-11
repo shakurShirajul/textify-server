@@ -49,12 +49,12 @@ app.get('/wishlists', async (req, res) => {
     const blogIds = data.map(item => item.blog_id);
 
     const blogQuerys = { _id: { $in: blogIds } };
-    console.log(blogQuerys);
+    // console.log(blogQuerys);
 
     // Getting All Wishlist Blogs
     const wishlistBlogs = await Blogs.find(blogQuerys);
 
-    console.log("Wishlist Data: ", wishlistBlogs);
+    // console.log("Wishlist Data: ", wishlistBlogs);
     res.send(wishlistBlogs);
 })
 
@@ -71,6 +71,15 @@ app.post('/wishlist', async (req, res) => {
             .status(208)
             .send({ message: 'Already Exist' });
     }
+})
+
+app.delete('/wishlist/:id', async (req, res) => {
+    const id = req.params.id;
+    // console.log(id);
+    const query = { blog_id: id };
+    const result = await Wishlists.deleteOne(query);
+    console.log(result);
+    res.send(result);
 })
 
 
