@@ -23,7 +23,6 @@ app.use(cookieParser());
 // Blogs 
 app.get('/blogs', async (req, res) => {  // Fetch Blogs Data From Database
     const urlQuery = req.query?.category;
-
     let blogs;
     if (urlQuery !== undefined) {
         console.log(urlQuery);
@@ -61,9 +60,16 @@ app.get('/blogs/search', async (req, res) => {
         res.status(500).send({ message: "Error searching blogs", error });
     }
 })
-// app.get('/blogs/category')
+app.get('/blog/:id', async (req, res) => {
+    const blogId = req.params.id;
+    const blog = await Blogs.findById(blogId);
+    console.log(blog);
+    res.send(blog);
+})
 
-// Wishlist
+
+/*  ***   Wishlist    ***   */
+
 app.get('/wishlists', async (req, res) => {
     const urlQuery = req.query;
     // console.log(urlQuery);
@@ -101,12 +107,30 @@ app.post('/wishlist', async (req, res) => {
 
 app.delete('/wishlist/:id', async (req, res) => {
     const id = req.params.id;
-    // console.log(id);
     const query = { blog_id: id };
     const result = await Wishlists.deleteOne(query);
-    console.log(result);
     res.send(result);
 })
+
+/*  ***   Comments    ***   */
+app.get('/comments/:id', async (req, res) => {
+
+    const id = req.params.id;
+    const result = await Comments.find({ blog_id: id });
+    // console.log("--- --- ---");
+    // console.log("Comments");
+    // console.log(result);
+    res.send(result);
+})
+
+app.post('/comment', async (req, res) => {
+    console.log("Here");
+    const insertComment = req.body;
+    const result = await Comments.create(insertComment);
+    res.send(result);
+    console.log(insertComment);
+})
+
 
 
 app.listen(PORT, () => {
