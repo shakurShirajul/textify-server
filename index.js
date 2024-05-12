@@ -63,7 +63,7 @@ app.get('/blogs/search', async (req, res) => {
 app.get('/blog/:id', async (req, res) => {
     const blogId = req.params.id;
     const blog = await Blogs.findById(blogId);
-    console.log(blog);
+    // console.log(blog);
     res.send(blog);
 })
 
@@ -120,6 +120,8 @@ app.get('/comments/:id', async (req, res) => {
     // console.log("--- --- ---");
     // console.log("Comments");
     // console.log(result);
+    // console.log("Post Comment : ", result);
+    console.log(id);
     res.send(result);
 })
 
