@@ -7,6 +7,7 @@ import { Blogs } from "./models/blogs.js";
 import { Comments } from "./models/comments.js";
 import { Wishlists } from "./models/wishlists.js"
 import { ObjectId } from "mongodb";
+import verifyToken from "./Middlewares/verfiyToken.js";
 
 
 const app = express();
@@ -16,8 +17,37 @@ database();
 
 // Middlewares
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: [
+        'http://localhost:5173',
+        'https://texttify.netlify.app/'
+    ],
+    credentials: true,
+}));
 app.use(cookieParser());
+
+// Testing Working Or Not
+app.get('/', (req, res) => {
+    res.send("Hello Textify Programmer");
+})
+
+
+// Authentication Related API
+app.post('/jwt', async (req, res) => {
+    const user = req.body;
+    const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: '1d' });
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none'
+    })
+        .send({ success: true });
+})
+app.post('/logout', async (req, res) => {
+    const user = req.body;
+    console.log('logging out', user);
+    res.clearCookie('token', { maxAge: 0, sameSite: 'none', secure: true }).send({ success: true })
+})
 
 
 // Blogs 
@@ -60,13 +90,21 @@ app.get('/blogs/search', async (req, res) => {
         res.status(500).send({ message: "Error searching blogs", error });
     }
 })
-app.get('/blog/:id', async (req, res) => {
+app.get('/blog/:id', verifyToken, async (req, res) => {
+    if (req.user.email !== req.query.email) {
+        return res.status(403).send({ message: 'forbidden access' })
+    }
     const blogId = req.params.id;
     const blog = await Blogs.findById(blogId);
     // console.log(blog);
     res.send(blog);
 })
 
+app.get('/blogs/featured', async (req, res) => {
+    const result = await Blogs.find({});
+    const sortedArray = result.sort((a, b) => b.long_description.length - a.long_description.length);
+    res.send(sortedArray);
+})
 
 /*  ***   Wishlist    ***   */
 
