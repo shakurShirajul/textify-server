@@ -6,8 +6,7 @@ import { database } from "./database/mongodb.js";
 import { Blogs } from "./models/blogs.js";
 import { Comments } from "./models/comments.js";
 import { Wishlists } from "./models/wishlists.js"
-import { ObjectId } from "mongodb";
-import verifyToken from "./Middlewares/verfiyToken.js";
+import jwt, { decode } from 'jsonwebtoken';
 
 
 const app = express();
@@ -20,11 +19,36 @@ app.use(express.json());
 app.use(cors({
     origin: [
         'http://localhost:5173',
-        'https://texttify.netlify.app/'
+        'https://texttify.netlify.app'
     ],
     credentials: true,
 }));
 app.use(cookieParser());
+
+
+const verifyToken = async (req, res, next) => {
+    const token = req.cookies?.token;
+    console.log(token)
+    if (!token) {
+        return res
+            .status(401)
+            .send({
+                message: "Unauthorized"
+            })
+    }
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+            return res
+                .status(401)
+                .send({
+                    message: "Unauthorized"
+                })
+        }
+        console.log('value in the token', decoded);
+        req.user = decoded;
+        next();
+    })
+}
 
 // Testing Working Or Not
 app.get('/', (req, res) => {
@@ -35,13 +59,14 @@ app.get('/', (req, res) => {
 // Authentication Related API
 app.post('/jwt', async (req, res) => {
     const user = req.body;
-    const token = jwt.sign(user, process.env.JWT_SECRET, { expiresIn: '1d' });
+    const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
     res.cookie('token', token, {
         httpOnly: true,
-        secure: true,
-        sameSite: 'none'
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
     })
-        .send({ success: true });
+        .send({ success: true, data: token });
+    // res.send("shirajul");
 })
 app.post('/logout', async (req, res) => {
     const user = req.body;
@@ -67,6 +92,7 @@ app.get('/blogs/recent', async (req, res) => { // Fetch Recents Six Blog From Da
     const options = { title: 1, image: 1, short_description: 1, category: 1, author_image: 1, author_name: 1, created_at: 1 }
     const data = await Blogs.find({}, options).limit(6).sort({ created_at: -1 });
     res.send(data);
+
 })
 app.post('/blog/add', async (req, res) => { // Insert Blog Data Into Database
     const insertBlog = await Blogs.create(req.body);
@@ -91,9 +117,10 @@ app.get('/blogs/search', async (req, res) => {
     }
 })
 app.get('/blog/:id', verifyToken, async (req, res) => {
-    if (req.user.email !== req.query.email) {
-        return res.status(403).send({ message: 'forbidden access' })
-    }
+    // if (req.user.email !== req.query.email) {
+    //     console.log(req.ueser.email, " ", req.query.email );
+    //     return res.status(403).send({ message: 'forbidden access', u: req.user.email, u1: req.query.email })
+    // }
     const blogId = req.params.id;
     const blog = await Blogs.findById(blogId);
     // console.log(blog);
