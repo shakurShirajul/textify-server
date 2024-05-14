@@ -1,8 +1,12 @@
 import mongoose from "mongoose";
 
-const commentSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema({
     user_name : {
         type : String,
+        required: true,
+    },
+    user_email : {
+        type: String,
         required: true,
     },
     user_image :{
@@ -15,4 +19,4 @@ const commentSchema = new mongoose.Schema({
     }
 })
 
-export const Comments = mongoose.model("comments", commentSchema)
+export const Users = mongoose.model("users", userSchema)

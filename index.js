@@ -1,4 +1,4 @@
-import express from "express";
+import express, { response } from "express";
 import cors from 'cors';
 import cookieParser from "cookie-parser";
 import 'dotenv/config'
@@ -8,6 +8,7 @@ import { Comments } from "./models/comments.js";
 import { Wishlists } from "./models/wishlists.js"
 import jwt from 'jsonwebtoken';
 import verifyToken from "./Middlewares/verfiyToken.js";
+import { Users } from "./models/users.js";
 
 
 const app = express();
@@ -78,10 +79,18 @@ app.post('/blog/add', verifyToken, async (req, res) => { // Insert Blog Data Int
     if (req.user.email !== req.query.email) {
         return res.status(403).send({ message: 'forbidden access', u: req.user.email, u1: req.query.email })
     }
-    console.log(req.body)
+    // console.log(req.body)
+
     const insertBlog = await Blogs.create(req.body);
-    res
-        .status(201)
+
+    // Update Number Of Blogs
+    const userBlogs = await Blogs.find({ author_email: req.query.email });
+
+    const response = await Users.updateOne({ user_email: req.query.email }, { $set: { number_of_blog: userBlogs.length } })
+
+    // console.log("Dustami: ", response);
+
+    res.status(201)
         .send({ success: true });
 })
 app.get('/blogs/search', async (req, res) => {
@@ -105,16 +114,30 @@ app.get('/blog/:id', verifyToken, async (req, res) => {
     if (req.user.email !== req.query.email) {
         return res.status(403).send({ message: 'forbidden access', u: req.user.email, u1: req.query.email })
     }
+
     const blogId = req.params.id;
     const blog = await Blogs.findById(blogId);
-    // console.log(blog);
+    console.log("Ore SHirajul islam shakur");
     res.send(blog);
 })
 
 app.get('/blogs/featured', async (req, res) => {
     const result = await Blogs.find({});
     const sortedArray = result.sort((a, b) => b.long_description.length - a.long_description.length);
-    res.send(sortedArray);
+    const newResult = sortedArray.slice(0, 10);
+    res.send(newResult);
+})
+
+app.patch('/blog/update/:id', verifyToken, async (req, res) => {
+    if (req.user.email !== req.query.email) {
+        return res.status(403).send({ message: 'forbidden access', u: req.user.email, u1: req.query.email })
+    }
+    const data = req.body;
+    const query = req.params.id;
+    // console.log(data, query);
+    const response = await Blogs.updateOne({ _id: query }, { $set: data });
+    console.log(response)
+    res.send(response);
 })
 
 /*  ***   Wishlist    ***   */
@@ -173,11 +196,7 @@ app.get('/comments/:id', async (req, res) => {
 
     const id = req.params.id;
     const result = await Comments.find({ blog_id: id });
-    // console.log("--- --- ---");
-    // console.log("Comments");
-    // console.log(result);
-    // console.log("Post Comment : ", result);
-    console.log(id);
+    // console.log(id);
     res.send(result);
 })
 
@@ -189,6 +208,21 @@ app.post('/comment', async (req, res) => {
     console.log(insertComment);
 })
 
+// Author API
+app.post('/setauthor', async (req, res) => {
+    const { email: user_email, name: user_name, photo: user_image, } = req.body;
+    console.log(req.body);
+    const result = await Users.find({ user_email })
+    if (result.length === 0) {
+        const data = await Users.create({ user_email, user_name, user_image });
+    }
+    console.log(result.length)
+})
+app.get('/authors', async (req, res) => {
+    const result = await Users.find({}).sort({ number_of_blog: -1 })
+    const newResult = result.slice(0, 3);
+    res.send(newResult)
+})
 
 
 app.listen(PORT, () => {
