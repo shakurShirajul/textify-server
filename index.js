@@ -184,7 +184,10 @@ app.post('/wishlist', verifyToken, async (req, res) => {
     }
 })
 
-app.delete('/wishlist/:id', async (req, res) => {
+app.delete('/wishlist/:id',verifyToken, async (req, res) => {
+    if (req.user.email !== req.query.email) {
+        return res.status(403).send({ message: 'forbidden access', u: req.user.email, u1: req.query.email })
+    }
     const id = req.params.id;
     const query = { blog_id: id };
     const result = await Wishlists.deleteOne(query);
@@ -200,8 +203,10 @@ app.get('/comments/:id', async (req, res) => {
     res.send(result);
 })
 
-app.post('/comment', async (req, res) => {
-    console.log("Here");
+app.post('/comment',verifyToken, async (req, res) => {
+    if (req.user.email !== req.query.email) {
+        return res.status(403).send({ message: 'forbidden access', u: req.user.email, u1: req.query.email })
+    }
     const insertComment = req.body;
     const result = await Comments.create(insertComment);
     res.send(result);
